@@ -58,23 +58,58 @@ def crack_electrum_wallet(mpk, pk, n, for_change=0):
     offset = dbl_sha256(str(n)+':'+str(for_change)+':'+bin_mpk)
     return subtract_privkeys(pk, offset)
 
-# Below code ASSUMES binary inputs and compressed pubkeys
+# Mainnet
 MAINNET_PRIVATE = b'\x04\x88\xAD\xE4'
 MAINNET_PUBLIC = b'\x04\x88\xB2\x1E'
+
+# Testnet or Regression Test Mode
 TESTNET_PRIVATE = b'\x04\x35\x83\x94'
 TESTNET_PUBLIC = b'\x04\x35\x87\xCF'
-PRIVATE = [MAINNET_PRIVATE, TESTNET_PRIVATE]
-PUBLIC = [MAINNET_PUBLIC, TESTNET_PUBLIC]
+
+# Mainnet Multi-signature (p2sh)
+MAINNET_P2SH_PUBLIC = b'\x04\x9D\x7C\xB2'
+MAINNET_P2SH_PRIVATE = b'\x04\x9D\x78\x78'
+
+# Testnet Multi-signature (p2sh)
+TESTNET_P2SH_PUBLIC = b'\x04\x4A\x52\x62'
+TESTNET_P2SH_PRIVATE = b'\x04\x4A\x4E\x28'
+
+# Mainnet Segwit (p2wpkh-nested-in-p2sh)
+MAINNET_P2WPKH_NESTED_PUBLIC = b'\x04\xB2\x47\x46'
+MAINNET_P2WPKH_NESTED_PRIVATE = b'\x04\xB2\x43\x0C'
+
+# Testnet Segwit (p2wpkh-nested-in-p2sh)
+TESTNET_P2WPKH_NESTED_PUBLIC = b'\x04\x5F\x1C\xF6'
+TESTNET_P2WPKH_NESTED_PRIVATE = b'\x04\x5F\x18\xBC'
+
+# Private version bytes array
+PRIVATE = [
+    MAINNET_PRIVATE,
+    TESTNET_PRIVATE,
+    MAINNET_P2SH_PRIVATE,
+    TESTNET_P2SH_PRIVATE,
+    MAINNET_P2WPKH_NESTED_PRIVATE,
+    TESTNET_P2WPKH_NESTED_PRIVATE
+]
+
+# Public version bytes array
+PUBLIC = [
+    MAINNET_PUBLIC,
+    TESTNET_PUBLIC,
+    MAINNET_P2SH_PUBLIC,
+    TESTNET_P2SH_PUBLIC,
+    MAINNET_P2WPKH_NESTED_PUBLIC,
+    TESTNET_P2WPKH_NESTED_PUBLIC
+]
+
 DEFAULT = (MAINNET_PRIVATE, MAINNET_PUBLIC)
 
 # BIP32 child key derivation
-
-
 def raw_bip32_ckd(rawtuple, i, prefixes=DEFAULT):
     vbytes, depth, fingerprint, oldi, chaincode, key = rawtuple
     i = int(i)
 
-    private = vbytes == prefixes[0]
+    private = (vbytes in PRIVATE)
 
     if private:
         priv = key
@@ -98,14 +133,21 @@ def raw_bip32_ckd(rawtuple, i, prefixes=DEFAULT):
 
     return (vbytes, depth + 1, fingerprint, i, I[32:], newkey)
 
-
 def bip32_serialize(rawtuple, prefixes=DEFAULT):
     vbytes, depth, fingerprint, i, chaincode, key = rawtuple
+    # Ensure i is encoded correctly
     i = encode(i, 256, 4)
-    chaincode = encode(hash_to_int(chaincode), 256, 32)
-    keydata = b'\x00'+key[:-1] if vbytes == prefixes[0] else key
+    # Check the encoding of the chaincode
+    chaincode = chaincode if len(chaincode) == 32 else encode(hash_to_int(chaincode), 256, 32)
+    # Depending on whether it's a private or public key, format keydata
+    if vbytes in PRIVATE:  # if it's a private key, for both mainnet and testnet
+        keydata = b'\x00' + key[:-1]
+    else:  # it's a public key
+        keydata = key
+    # Assemble all the pieces
     bindata = vbytes + from_int_to_byte(depth % 256) + fingerprint + i + chaincode + keydata
-    return changebase(bindata+bin_dbl_sha256(bindata)[:4], 256, 58)
+    # Return the Base58Check encoded data
+    return changebase(bindata + bin_dbl_sha256(bindata)[:4], 256, 58)
 
 
 def bip32_deserialize(data, prefixes=DEFAULT):
@@ -117,9 +159,8 @@ def bip32_deserialize(data, prefixes=DEFAULT):
     fingerprint = dbin[5:9]
     i = decode(dbin[9:13], 256)
     chaincode = dbin[13:45]
-    key = dbin[46:78]+b'\x01' if vbytes == prefixes[0] else dbin[45:78]
+    key = dbin[46:78]+b'\x01' if vbytes in PRIVATE else dbin[45:78]
     return (vbytes, depth, fingerprint, i, chaincode, key)
-
 
 def is_xprv(text, prefixes=DEFAULT):
     try:
