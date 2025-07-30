@@ -456,7 +456,7 @@ def get_version_byte(inp):
     leadingzbytes = len(re.match('^1*', inp).group(0))
     data = b'\x00' * leadingzbytes + changebase(inp, 58, 256)
     assert bin_dbl_sha256(data[:-4])[:4] == data[-4:]
-    return ord(data[0])
+    return ord(data[0:1])
 
 
 def hex_to_b58check(inp, magicbyte=0):
@@ -570,12 +570,12 @@ def ecdsa_verify_addr(msg, sig, addr, coin):
     assert coin.is_address(addr)
     Q = ecdsa_recover(msg, sig)
     magic = get_version_byte(addr)
-    return (addr == coin.pubtoaddr(Q, int(magic))) or (addr == coin.pubtoaddr(compress(Q), int(magic)))
+    return (addr == pubkey_to_address(Q, int(magic))) or (addr == pubkey_to_address(compress(Q), int(magic)))
 
 
 def ecdsa_verify(msg, sig, pub, coin):
-    if coin.is_address(pub):
-        return ecdsa_verify_addr(msg, sig, pub, coin)
+    if coin.is_address(msg):
+        return ecdsa_verify_addr(msg, sig, coin.pubtoaddr(pub), coin)
     return ecdsa_raw_verify(electrum_sig_hash(msg), decode_sig(sig), pub)
 
 
