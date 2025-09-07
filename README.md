@@ -1,5 +1,8 @@
 # Pycryptotools, Python library for Crypto coins signatures and transactions
 
+This is a fork of the Paul Martin library, which fixed a bug with displaying addresses of the Witness standard. 
+The following is a description of the original library:
+
 This is a fork of Vitalik Buterin's original [pybitcointools](https://github.com/vbuterin/pybitcointools) library.
 
 After a lot of work, the library is finally active again and being actively updated. This took a lot of work and unfortunately some backward imcompatible changes may have been introduced in v2. If you run into issues after upgrading open an issue and will try to help. If it's reasonable to do so we can consider restoring the previous behaviour in v2, otherwise will assist with migration.

@@ -1067,12 +1067,12 @@ class BaseCoin:
             i = _in['tx_pos']
             prevout = (await anext(self.get_txs(h)))['outs'][i]
             isum += prevout['value']
-            a = self.scripttoaddr(prevout['script'])
+            a = self.output_script_to_address(prevout['script'])
             ins[a] = ins.get(a, 0) + prevout['value']
         outs = []
         osum = 0
         for _out in tx['outs']:
-            outs.append({'address': self.scripttoaddr(_out['script']),
+            outs.append({'address': self.output_script_to_address(_out['script']),
                          'value': _out['value']})
             osum += _out['value']
         return {

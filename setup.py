@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-setup(name='cryptos',
+setup(name='cryptos_witness',
       version='2.0.9',
       description='Python Crypto Coin Tools',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
-      author='Paul Martin',
-      author_email='greatestloginnameever@gmail.com',
-      url='http://github.com/primal100/pybitcointools',
+      author='gberdyshev',
+      author_email='bga20100@gmail.com',
+      url='https://github.com/gberdyshev/pybitcointools',
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
