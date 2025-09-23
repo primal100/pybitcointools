@@ -370,7 +370,7 @@ def bin_sha256(string):
     return hashlib.sha256(binary_data).digest()
 
 def sha256(string):
-    return bytes_to_hex_string(bin_sha256(string))
+    return hashlib.sha256(string.encode()).hexdigest()
 
 
 def bin_ripemd160(string):
